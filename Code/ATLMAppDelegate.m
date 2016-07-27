@@ -31,8 +31,9 @@
 #import "ATLMConstants.h"
 #import "ATLMAuthenticationProvider.h"
 #import "ATLMApplicationViewController.h"
+#import "MakemojiSDK.h"
 
-static NSString *const ATLMLayerAppID = nil;
+static NSString *const ATLMLayerAppID = @"layer:///apps/staging/7348b85e-d9d0-11e5-b6a9-c01d00006542";;
 static NSString *const ATLMLayerApplicationIDUserDefaultsKey = @"com.layer.Atlas-Messenger.appID";
 
 @interface ATLMAppDelegate () <ATLMApplicationControllerDelegate, ATLMLayerControllerDelegate>
@@ -70,6 +71,9 @@ static NSString *const ATLMLayerApplicationIDUserDefaultsKey = @"com.layer.Atlas
     self.window.frame = [[UIScreen mainScreen] bounds];
     self.window.rootViewController = self.applicationViewController;
     [self.window makeKeyAndVisible];
+    
+    //init makemoji
+    [MakemojiSDK setSDKKey:@"3bbe752cdc0f2aec576e804ea5836aab69cd97e0"];
     return YES;
 }
 

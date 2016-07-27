@@ -7,6 +7,8 @@ target 'Atlas Messenger' do
   pod 'Atlas', '~> 1.0.25'
   pod 'SVProgressHUD'
   pod 'ClusterPrePermissions', '~> 0.1'
+  pod 'JRSwizzle'
+  pod "Makemoji-SDK"  
 end
 
 target 'Atlas MessengerTests' do

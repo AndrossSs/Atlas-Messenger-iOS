@@ -26,6 +26,12 @@
 #import "ATLMParticipantTableViewController.h"
 #import "LYRIdentity+ATLParticipant.h"
 
+// Makemoji Addition
+#import "JRSwizzle.h"
+#import "MEOutgoingMessageCollectionViewCell.h"
+#import "MEIncomingMessageCollectionViewCell.h"
+#import "METextInputView.h"
+
 static NSDateFormatter *ATLMShortTimeFormatter()
 {
     static NSDateFormatter *dateFormatter;
@@ -101,7 +107,7 @@ static ATLMDateProximity ATLMProximityToDate(NSDate *date)
         dateComponents.era == todayComponents.era) {
         return ATLMDateProximityToday;
     }
-
+    
     NSDateComponents *componentsToYesterday = [NSDateComponents new];
     componentsToYesterday.day = -1;
     NSDate *yesterday = [calendar dateByAddingComponents:componentsToYesterday toDate:now options:0];
@@ -112,23 +118,28 @@ static ATLMDateProximity ATLMProximityToDate(NSDate *date)
         dateComponents.era == yesterdayComponents.era) {
         return ATLMDateProximityYesterday;
     }
-
+    
     if (dateComponents.weekOfMonth == todayComponents.weekOfMonth &&
         dateComponents.month == todayComponents.month &&
         dateComponents.year == todayComponents.year &&
         dateComponents.era == todayComponents.era) {
         return ATLMDateProximityWeek;
     }
-
+    
     if (dateComponents.year == todayComponents.year &&
         dateComponents.era == todayComponents.era) {
         return ATLMDateProximityYear;
     }
-
+    
     return ATLMDateProximityOther;
 }
 
 @interface ATLMConversationViewController () <ATLMConversationDetailViewControllerDelegate, ATLParticipantTableViewControllerDelegate>
+
+//Makemoji additions
+@property (nonatomic) METextInputView * meTextInputView;
+@property (nonatomic) NSMutableArray * messageCells;
+@property (nonatomic) NSMutableArray * mediaAttachments;
 
 @end
 
@@ -137,6 +148,7 @@ static ATLMDateProximity ATLMProximityToDate(NSDate *date)
 NSString *const ATLMConversationViewControllerAccessibilityLabel = @"Conversation View Controller";
 NSString *const ATLMDetailsButtonAccessibilityLabel = @"Details Button";
 NSString *const ATLMDetailsButtonLabel = @"Details";
+static NSInteger const ATLPhotoActionSheet = 1000;
 
 - (void)viewDidLoad
 {
@@ -144,13 +156,45 @@ NSString *const ATLMDetailsButtonLabel = @"Details";
     self.view.accessibilityLabel = ATLMConversationViewControllerAccessibilityLabel;
     self.dataSource = self;
     self.delegate = self;
-   
+    
     if (self.conversation) {
         [self addDetailsButton];
     }
     
     [self configureUserInterfaceAttributes];
     [self registerNotificationObservers];
+    
+    // Makemoji Addition: Use this array to keep track of message position since heightForMessage does not return an index path
+    self.messageCells = [NSMutableArray array];
+    
+    // nil the existing Input Accessory view to remove the message toolbar
+    
+    ATLConversationView * conversationView = (ATLConversationView *)self.view;
+    conversationView.inputAccessoryView = nil;
+    self.shouldDisplayAvatarItemForOneOtherParticipant = YES;
+    self.shouldDisplayAvatarItemForAuthenticatedUser = YES;
+    
+    
+    // initialize the Makemoji text input and toolbar
+    
+    self.meTextInputView = [[METextInputView alloc] initWithFrame:CGRectZero];
+    self.meTextInputView.delegate = self;
+    [self.meTextInputView setDisableIntroAnimation:YES];
+    [self.view addSubview:self.meTextInputView];
+    
+    // initially hide the toolbar for recipient picker
+    self.meTextInputView.hidden = YES;
+    self.collectionView.keyboardDismissMode = UIScrollViewKeyboardDismissModeOnDrag;
+    
+    // custom collection view cell for displaying HTML messages
+    [self registerClass:[MEOutgoingMessageCollectionViewCell class] forMessageCellWithReuseIdentifier:@"MEOutgoingMessageCollectionViewCell"];
+    [self registerClass:[MEIncomingMessageCollectionViewCell class] forMessageCellWithReuseIdentifier:@"MEIncomingMessageCollectionViewCell"];
+    self.edgesForExtendedLayout = UIRectEdgeNone;
+    
+    // initial offsets
+    self.collectionView.scrollIndicatorInsets = UIEdgeInsetsMake(0, 0, (self.view.frame.size.height-self.meTextInputView.frame.origin.y), 0);
+    self.collectionView.contentInset = UIEdgeInsetsMake(0, 0, (self.view.frame.size.height-self.meTextInputView.frame.origin.y), 0);
+    
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -162,8 +206,10 @@ NSString *const ATLMDetailsButtonLabel = @"Details";
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
-    if (!self.view.isFirstResponder) {
-        [self.view becomeFirstResponder];
+    if (self.conversation) {
+        self.meTextInputView.hidden = NO;
+        [self.meTextInputView becomeFirstResponder];
+        [self.meTextInputView.meAccessory introBarAnimation:YES];
     }
 }
 
@@ -171,7 +217,7 @@ NSString *const ATLMDetailsButtonLabel = @"Details";
 {
     [super viewWillDisappear:animated];
     if (![self isMovingFromParentViewController]) {
-        [self.view resignFirstResponder];
+        [self.meTextInputView resignFirstResponder];
     }
 }
 
@@ -180,12 +226,218 @@ NSString *const ATLMDetailsButtonLabel = @"Details";
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+#pragma mark - Makemoji Customizations
+
+- (NSString *)conversationViewController:(ATLConversationViewController *)viewController reuseIdentifierForMessage:(LYRMessage *)message {
+    LYRMessagePart *part = message.parts[0];
+    NSString * messageText = [[NSString alloc] initWithData:part.data encoding:NSUTF8StringEncoding];
+    if ([part.MIMEType  isEqualToString:@"text/plain"] && [METextInputView detectMakemojiMessage:messageText] == YES) {
+        if ([message.sender.userID isEqualToString:self.layerClient.authenticatedUser.userID]) {
+            return @"MEOutgoingMessageCollectionViewCell";
+        } else {
+            return @"MEIncomingMessageCollectionViewCell";
+        }
+    }
+    return nil;
+}
+
+- (CGFloat)conversationViewController:(ATLConversationViewController *)viewController heightForMessage:(LYRMessage *)message withCellWidth:(CGFloat)cellWidth {
+    LYRMessagePart *part = message.parts[0];
+    NSString * messageText = [[NSString alloc] initWithData:part.data encoding:NSUTF8StringEncoding];
+    
+    if ([part.MIMEType  isEqualToString:@"text/plain"] && [METextInputView detectMakemojiMessage:messageText] == YES) {
+        NSString * messageHTML = [METextInputView convertSubstituedToHTML:messageText];
+        NSString * messsageIdentifier = [message.identifier absoluteString];
+        NSUInteger index;
+        
+        if ([self.messageCells containsObject:messsageIdentifier]) {
+            index = [self.messageCells indexOfObject:[message.identifier absoluteString]];
+        } else {
+            [self.messageCells addObject:messsageIdentifier];
+            index = [self.messageCells indexOfObject:[message.identifier absoluteString]];
+        }
+        CGFloat messageHeight = [self.meTextInputView cellHeightForHTML:messageHTML
+                                                            atIndexPath:[NSIndexPath indexPathForRow:index inSection:0]
+                                                           maxCellWidth:ATLMaxCellWidth()
+                                                              cellStyle:MECellStyleSimple];
+        CGFloat totalHeight = messageHeight + ATLMessageBubbleLabelVerticalPadding*2;
+        
+        if (totalHeight < ATLMessageBubbleDefaultHeight) totalHeight = ATLMessageBubbleDefaultHeight;
+        return  totalHeight;
+    }
+    
+    return 0;
+}
+
+// the chat input frame changed size (keyboard show, expanding input)
+-(void)meTextInputView:(METextInputView *)inputView didChangeFrame:(CGRect)frame {
+    
+    CGFloat collapsedHeight = self.view.frame.size.height-frame.size.height;
+    CGFloat heightOffset = (self.view.frame.size.height-self.meTextInputView.frame.origin.y);
+    CGFloat topOffset = 0;
+    
+    if (self.addressBarController != nil && self.addressBarController.view.subviews.count > 0) {
+        UIView * addressBarView = (UIView *)[self.addressBarController.view.subviews objectAtIndex:0];
+        topOffset = addressBarView.frame.size.height;
+    }
+    
+    if (heightOffset != self.collectionView.contentInset.bottom) {
+        self.collectionView.scrollIndicatorInsets = UIEdgeInsetsMake(topOffset, 0, heightOffset, 0);
+        self.collectionView.contentInset = UIEdgeInsetsMake(topOffset, 0, heightOffset, 0);
+        if (frame.origin.y != collapsedHeight) {
+            [self scrollToBottomAnimated:YES];
+        }
+    }
+    
+}
+
+-(void)meTextInputView:(METextInputView *)inputView didTapCameraButton:(UIButton*)cameraButton {
+    [self.meTextInputView resignFirstResponder];
+    [self.messageInputToolbar.inputToolBarDelegate messageInputToolbar:self.messageInputToolbar didTapLeftAccessoryButton:self.messageInputToolbar.leftAccessoryButton];
+}
+
+// send button was pressed
+-(void)meTextInputView:(METextInputView *)inputView didTapSend:(NSDictionary *)message {
+    NSData *messageData = [[message objectForKey:@"substitute"] dataUsingEncoding:NSUTF8StringEncoding];
+    LYRMessagePart *messagePart = [LYRMessagePart messagePartWithMIMEType:@"text/plain" data:messageData];
+    NSError *error = nil;
+    LYRMessage *layerMessage;
+
+    if (self.mediaAttachments.count > 0) {
+        NSArray * messageParts = ATLMessagePartsWithMediaAttachment([self.mediaAttachments objectAtIndex:0]);
+        layerMessage = [self.layerClient newMessageWithParts:messageParts options:nil error:&error];
+        BOOL success = [self.conversation sendMessage:layerMessage error:&error];
+    }
+    
+    layerMessage = [self.layerClient newMessageWithParts:@[ messagePart] options:nil error:&error];
+    
+    BOOL success = [self.conversation sendMessage:layerMessage error:&error];
+}
+
+#pragma mark - ATLConversationViewController Overrides
+
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
+{
+    NSLog(@"imagePickerController ");
+    
+    ATLMediaAttachment *mediaAttachment;
+    if (info[UIImagePickerControllerMediaURL]) {
+        // Video recorded within the app or was picked and edited in
+        // the image picker.
+        NSURL *moviePath = [NSURL fileURLWithPath:(NSString *)[[info objectForKey:UIImagePickerControllerMediaURL] path]];
+        mediaAttachment = [ATLMediaAttachment mediaAttachmentWithFileURL:moviePath thumbnailSize:ATLDefaultThumbnailSize];
+    } else if (info[UIImagePickerControllerReferenceURL]) {
+        // Photo taken or video recorded within the app.
+        mediaAttachment = [ATLMediaAttachment mediaAttachmentWithAssetURL:info[UIImagePickerControllerReferenceURL] thumbnailSize:ATLDefaultThumbnailSize];
+    } else if (info[UIImagePickerControllerOriginalImage]) {
+        // Image picked from the image picker.
+        mediaAttachment = [ATLMediaAttachment mediaAttachmentWithImage:info[UIImagePickerControllerOriginalImage] metadata:info[UIImagePickerControllerMediaMetadata] thumbnailSize:ATLDefaultThumbnailSize];
+    } else {
+        return;
+    }
+    
+    if (mediaAttachment) {
+        self.meTextInputView.cameraButton.tintColor = [UIColor colorWithRed:0.26 green:0.71 blue:0.91 alpha:1];
+        self.mediaAttachments = [NSMutableArray arrayWithObject:mediaAttachment];
+    }
+
+    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+    [self.meTextInputView becomeFirstResponder];
+    
+    // Workaround for collection view not displayed on iOS 7.1.
+    [self.collectionView setNeedsLayout];
+}
+
+- (void)messageInputToolbar:(ATLMessageInputToolbar *)messageInputToolbar didTapLeftAccessoryButton:(UIButton *)leftAccessoryButton
+{
+    if (messageInputToolbar.textInputView.isFirstResponder) {
+        [messageInputToolbar.textInputView resignFirstResponder];
+    }
+    UIActionSheet *actionSheet;
+    
+    if (self.mediaAttachments.count > 0) {
+    actionSheet = [[UIActionSheet alloc] initWithTitle:nil
+                                                             delegate:self
+                                                    cancelButtonTitle:ATLLocalizedString(@"atl.conversation.toolbar.actionsheet.cancel.key", @"Cancel", nil)
+                                               destructiveButtonTitle:nil
+                                                    otherButtonTitles:ATLLocalizedString(@"atl.conversation.toolbar.actionsheet.takephoto.key", @"Take Photo/Video", nil), ATLLocalizedString(@"atl.conversation.toolbar.actionsheet.lastphoto.key", @"Last Photo/Video", nil), ATLLocalizedString(@"atl.conversation.toolbar.actionsheet.library.key", @"Photo/Video Library", nil), @"Remove Attachment", nil];
+    } else {
+        actionSheet = [[UIActionSheet alloc] initWithTitle:nil
+                                                                 delegate:self
+                                                        cancelButtonTitle:ATLLocalizedString(@"atl.conversation.toolbar.actionsheet.cancel.key", @"Cancel", nil)
+                                                   destructiveButtonTitle:nil
+                                                        otherButtonTitles:ATLLocalizedString(@"atl.conversation.toolbar.actionsheet.takephoto.key", @"Take Photo/Video", nil), ATLLocalizedString(@"atl.conversation.toolbar.actionsheet.lastphoto.key", @"Last Photo/Video", nil), ATLLocalizedString(@"atl.conversation.toolbar.actionsheet.library.key", @"Photo/Video Library", nil), nil];
+    }
+    
+    [actionSheet showInView:self.view];
+    actionSheet.tag = ATLPhotoActionSheet;
+}
+
+- (void)captureLastPhotoTaken
+{
+    ATLAssetURLOfLastPhotoTaken(^(NSURL *assetURL, NSError *error) {
+        if (error) {
+            NSLog(@"Failed to capture last photo with error: %@", [error localizedDescription]);
+        } else {
+            ATLMediaAttachment *mediaAttachment = [ATLMediaAttachment mediaAttachmentWithAssetURL:assetURL thumbnailSize:ATLDefaultThumbnailSize];
+            if (mediaAttachment) {
+                self.meTextInputView.cameraButton.tintColor = [UIColor colorWithRed:0.26 green:0.71 blue:0.91 alpha:1];
+                self.mediaAttachments = [NSMutableArray arrayWithObject:mediaAttachment];
+            }
+        }
+    });
+}
+
+- (void)displayImagePickerWithSourceType:(UIImagePickerControllerSourceType)sourceType;
+{
+    [self.messageInputToolbar.textInputView resignFirstResponder];
+    BOOL pickerSourceTypeAvailable = [UIImagePickerController isSourceTypeAvailable:sourceType];
+    if (pickerSourceTypeAvailable) {
+        UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+        picker.delegate = self;
+        picker.mediaTypes = [UIImagePickerController availableMediaTypesForSourceType:sourceType];
+        picker.sourceType = sourceType;
+        picker.videoQuality = UIImagePickerControllerQualityTypeHigh;
+        [self.navigationController presentViewController:picker animated:YES completion:nil];
+    }
+}
+
+- (void)actionSheet:(UIActionSheet *)actionSheet didDismissWithButtonIndex:(NSInteger)buttonIndex
+{
+    if (actionSheet.tag == ATLPhotoActionSheet) {
+        switch (buttonIndex) {
+            case 0:
+                [self displayImagePickerWithSourceType:UIImagePickerControllerSourceTypeCamera];
+                break;
+                
+            case 1:
+                [self captureLastPhotoTaken];
+                break;
+                
+            case 2:
+                [self displayImagePickerWithSourceType:UIImagePickerControllerSourceTypePhotoLibrary];
+                break;
+            case 3:
+                self.mediaAttachments = [NSMutableArray array];
+                self.meTextInputView.cameraButton.tintColor = [UIColor lightGrayColor];
+            default:
+                break;
+        }
+    }
+}
+
 #pragma mark - Accessors
 
 - (void)setConversation:(LYRConversation *)conversation
 {
     [super setConversation:conversation];
     [self configureTitle];
+    
+    if (conversation != nil) {
+        self.meTextInputView.hidden = NO;
+        [self.meTextInputView showKeyboard];
+    }
+    
 }
 
 #pragma mark - ATLConversationViewControllerDelegate
@@ -278,7 +530,7 @@ NSString *const ATLMDetailsButtonLabel = @"Details";
             dateFormatter = ATLMDefaultDateFormatter();
             break;
     }
-
+    
     NSString *dateString = [dateFormatter stringFromDate:date];
     NSString *timeString = [ATLMShortTimeFormatter() stringFromDate:date];
     
@@ -460,6 +712,7 @@ NSString *const ATLMDetailsButtonLabel = @"Details";
 {
     self.conversation = conversation;
     [self configureTitle];
+    [self.meTextInputView showKeyboard];
 }
 
 #pragma mark - Details Button Actions
@@ -467,7 +720,7 @@ NSString *const ATLMDetailsButtonLabel = @"Details";
 - (void)addDetailsButton
 {
     if (self.navigationItem.rightBarButtonItem) return;
-
+    
     UIBarButtonItem *detailsButtonItem = [[UIBarButtonItem alloc] initWithTitle:ATLMDetailsButtonLabel
                                                                           style:UIBarButtonItemStylePlain
                                                                          target:self
@@ -490,7 +743,7 @@ NSString *const ATLMDetailsButtonLabel = @"Details";
     if (!self.conversation) return;
     if (!notification.object) return;
     if (![notification.object isEqual:self.conversation]) return;
-
+    
     [self configureTitle];
 }
 
@@ -575,5 +828,24 @@ NSString *const ATLMDetailsButtonLabel = @"Details";
 {
     [self.collectionView.collectionViewLayout invalidateLayout];
 }
+
+@end
+
+
+
+@implementation ATLConversationView (Tracking)
+
++ (void)initialize {
+    [super initialize];
+    [self jr_swizzleMethod:@selector(canBecomeFirstResponder)
+                withMethod:@selector(SNcanBecomeFirstResponder)
+                     error:nil];
+}
+
+- (BOOL)SNcanBecomeFirstResponder {
+    return NO;
+}
+
+
 
 @end

@@ -23,7 +23,9 @@
 #import "ATLMSettingsViewController.h"
 #import "ATLMConversationDetailViewController.h"
 #import "ATLMNavigationController.h"
+
 #import "LYRIdentity+ATLParticipant.h"
+#import "MEConversationListCell.h"
 
 @interface ATLMConversationListViewController () <ATLConversationListViewControllerDelegate, ATLConversationListViewControllerDataSource, ATLMSettingsViewControllerDelegate, UIActionSheetDelegate>
 
@@ -45,6 +47,7 @@ NSString *const ATLMComposeButtonAccessibilityLabel = @"Compose Button";
     self.delegate = self;
     self.dataSource = self;
     self.allowsEditing = YES;
+    self.cellClass = [MEConversationListCell class];
     
     // Left navigation item
     UIButton* infoButton= [UIButton buttonWithType:UIButtonTypeInfoLight];

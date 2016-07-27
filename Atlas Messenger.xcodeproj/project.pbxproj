@@ -47,6 +47,10 @@
 		251D8DDB1A9688C50000BFA2 /* ATLMOverlayView.m in Sources */ = {isa = PBXBuildFile; fileRef = 251D8DBF1A9688C40000BFA2 /* ATLMOverlayView.m */; };
 		259A57741950EB83000E27B0 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 259A576E1950EB83000E27B0 /* InfoPlist.strings */; };
 		B0AC4E1964E683729B0EB00E /* Pods_Atlas_MessengerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B8D992502060E4DAC6E2B228 /* Pods_Atlas_MessengerTests.framework */; };
+		C63C9FA01D4866DB00493DA9 /* DTCoreTextFontOverrides.plist in Resources */ = {isa = PBXBuildFile; fileRef = C63C9F9F1D4866DB00493DA9 /* DTCoreTextFontOverrides.plist */; };
+		C6C5EDA91D4734A400458F1D /* MEConversationListCell.m in Sources */ = {isa = PBXBuildFile; fileRef = C6C5EDA41D4734A400458F1D /* MEConversationListCell.m */; };
+		C6C5EDAA1D4734A400458F1D /* MEIncomingMessageCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = C6C5EDA61D4734A400458F1D /* MEIncomingMessageCollectionViewCell.m */; };
+		C6C5EDAB1D4734A400458F1D /* MEOutgoingMessageCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = C6C5EDA81D4734A400458F1D /* MEOutgoingMessageCollectionViewCell.m */; };
 		D016D0FC1D20D9D900D9AA4F /* ATLMApplicationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D016D0FB1D20D9D900D9AA4F /* ATLMApplicationViewController.m */; };
 		D62611691A98091800F6E707 /* layer-logo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D62611661A98091800F6E707 /* layer-logo@2x.png */; };
 		D626116A1A98091800F6E707 /* layer-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = D62611671A98091800F6E707 /* layer-logo.png */; };
@@ -158,6 +162,13 @@
 		7FC2AE76B8F67E2DF341D013 /* Pods-Atlas MessengerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Atlas MessengerTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-Atlas MessengerTests/Pods-Atlas MessengerTests.release.xcconfig"; sourceTree = "<group>"; };
 		B53937831A24F6AF00DE60F9 /* Fabric.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Fabric.framework; sourceTree = "<group>"; };
 		B8D992502060E4DAC6E2B228 /* Pods_Atlas_MessengerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Atlas_MessengerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C63C9F9F1D4866DB00493DA9 /* DTCoreTextFontOverrides.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DTCoreTextFontOverrides.plist; sourceTree = "<group>"; };
+		C6C5EDA31D4734A400458F1D /* MEConversationListCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MEConversationListCell.h; path = Controllers/MEConversationListCell.h; sourceTree = "<group>"; };
+		C6C5EDA41D4734A400458F1D /* MEConversationListCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MEConversationListCell.m; path = Controllers/MEConversationListCell.m; sourceTree = "<group>"; };
+		C6C5EDA51D4734A400458F1D /* MEIncomingMessageCollectionViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MEIncomingMessageCollectionViewCell.h; path = Controllers/MEIncomingMessageCollectionViewCell.h; sourceTree = "<group>"; };
+		C6C5EDA61D4734A400458F1D /* MEIncomingMessageCollectionViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MEIncomingMessageCollectionViewCell.m; path = Controllers/MEIncomingMessageCollectionViewCell.m; sourceTree = "<group>"; };
+		C6C5EDA71D4734A400458F1D /* MEOutgoingMessageCollectionViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MEOutgoingMessageCollectionViewCell.h; path = Controllers/MEOutgoingMessageCollectionViewCell.h; sourceTree = "<group>"; };
+		C6C5EDA81D4734A400458F1D /* MEOutgoingMessageCollectionViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MEOutgoingMessageCollectionViewCell.m; path = Controllers/MEOutgoingMessageCollectionViewCell.m; sourceTree = "<group>"; };
 		CA1D93E68E9105BA0139B1C2 /* Pods.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D016D0FA1D20D9D900D9AA4F /* ATLMApplicationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ATLMApplicationViewController.h; sourceTree = "<group>"; };
 		D016D0FB1D20D9D900D9AA4F /* ATLMApplicationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ATLMApplicationViewController.m; sourceTree = "<group>"; };
@@ -363,6 +374,7 @@
 		259A57111950EB76000E27B0 /* Code */ = {
 			isa = PBXGroup;
 			children = (
+				C6C5EDA21D47348800458F1D /* Makemoji */,
 				D694465C1CF4D76400802CD6 /* Protocols */,
 				251D8D841A9688C40000BFA2 /* ATLMAppDelegate.h */,
 				251D8D851A9688C40000BFA2 /* ATLMAppDelegate.m */,
@@ -416,6 +428,20 @@
 				B8D992502060E4DAC6E2B228 /* Pods_Atlas_MessengerTests.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		C6C5EDA21D47348800458F1D /* Makemoji */ = {
+			isa = PBXGroup;
+			children = (
+				C63C9F9F1D4866DB00493DA9 /* DTCoreTextFontOverrides.plist */,
+				C6C5EDA31D4734A400458F1D /* MEConversationListCell.h */,
+				C6C5EDA41D4734A400458F1D /* MEConversationListCell.m */,
+				C6C5EDA51D4734A400458F1D /* MEIncomingMessageCollectionViewCell.h */,
+				C6C5EDA61D4734A400458F1D /* MEIncomingMessageCollectionViewCell.m */,
+				C6C5EDA71D4734A400458F1D /* MEOutgoingMessageCollectionViewCell.h */,
+				C6C5EDA81D4734A400458F1D /* MEOutgoingMessageCollectionViewCell.m */,
+			);
+			name = Makemoji;
 			sourceTree = "<group>";
 		};
 		D61B10981A6F2DA1009BFA9C /* Controllers */ = {
@@ -579,6 +605,7 @@
 				D633684F1A9D614900FBFCD3 /* atlas-splashscreen-1334.png in Resources */,
 				D62611721A98153C00F6E707 /* layer-logo-gray@3x.png in Resources */,
 				0ABEFFAF196B7686006FFFF3 /* logo@2x.png in Resources */,
+				C63C9FA01D4866DB00493DA9 /* DTCoreTextFontOverrides.plist in Resources */,
 				D62D17371A9C267C00E0EFAF /* Launch Screen.xib in Resources */,
 				D63368501A9D614900FBFCD3 /* atlas-splashscreen-1336.png in Resources */,
 				D62D17351A9C22E100E0EFAF /* Images.xcassets in Resources */,
@@ -641,7 +668,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		8CE6C1453AC914FCFDA7AC39 /* [CP] Copy Pods Resources */ = {
@@ -686,7 +713,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -700,6 +727,7 @@
 				251D8DC21A9688C50000BFA2 /* ATLMLayerController.m in Sources */,
 				251D8DCA1A9688C50000BFA2 /* ATLMSettingsViewController.m in Sources */,
 				D648F5A61CEA2C6300614F28 /* main.m in Sources */,
+				C6C5EDA91D4734A400458F1D /* MEConversationListCell.m in Sources */,
 				251D8DCC1A9688C50000BFA2 /* ATLMRegistrationViewController.m in Sources */,
 				251D8DC31A9688C50000BFA2 /* ATLMConversationDetailViewController.m in Sources */,
 				251D8DC51A9688C50000BFA2 /* ATLMConversationViewController.m in Sources */,
@@ -717,9 +745,11 @@
 				251D8DCB1A9688C50000BFA2 /* ATLMQRScannerController.m in Sources */,
 				251D8DD11A9688C50000BFA2 /* ATLMHTTPResponseSerializer.m in Sources */,
 				251D8DD71A9688C50000BFA2 /* ATLMInputTableViewCell.m in Sources */,
+				C6C5EDAA1D4734A400458F1D /* MEIncomingMessageCollectionViewCell.m in Sources */,
 				251D8DDB1A9688C50000BFA2 /* ATLMOverlayView.m in Sources */,
 				251D8DD51A9688C50000BFA2 /* ATLLogoView.m in Sources */,
 				251D8DC71A9688C50000BFA2 /* ATLMNavigationController.m in Sources */,
+				C6C5EDAB1D4734A400458F1D /* MEOutgoingMessageCollectionViewCell.m in Sources */,
 				251D8DD61A9688C50000BFA2 /* ATLMCenterTextTableViewCell.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
